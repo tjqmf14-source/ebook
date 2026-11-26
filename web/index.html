@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#112e59">
+  <meta name="description" content="부산대학교 80년사(1946–2026) 웹 전자책. 페이지 넘김, 목차, 페이지 이동을 지원합니다.">
+  <title>플립북 스튜디오</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="site-header">
+      <div class="brand" aria-label="부산대학교 80년사">
+        <img class="brand-logo" id="brandLogo" alt="플립북 아이콘" hidden>
+        <div class="brand-title"><strong id="brandName">나의 플립북</strong><span id="brandSubtitle">WEB FLIPBOOK</span></div>
+      </div>
+      <div class="header-actions">
+        <button id="newBook" class="header-button" type="button">새 파일</button><button id="exportBook" class="header-button" type="button" hidden>ZIP 저장</button><button id="settingsToggle" class="header-button primary" type="button" aria-controls="settingsPanel" aria-expanded="false">뷰어 설정</button>
+      </div>
+    </header>
+    <main class="reader-shell"><section id="emptyState" class="empty-state" aria-label="파일 가져오기"><div class="empty-icon" aria-hidden="true">＋</div><div class="empty-eyebrow">FLIPBOOK STUDIO</div><h1>책을 여기에 놓아 주세요</h1><p>PDF 또는 EPUB 파일을 끌어다 놓으면 플립북이 만들어집니다.</p><button id="chooseFile" class="import-button" type="button">파일 선택</button><input id="fileInput" type="file" accept=".pdf,.epub,application/pdf,application/epub+zip" hidden><div id="importStatus" class="import-status" role="status" aria-live="polite">파일을 기다리고 있습니다</div></section>
+      <button id="tocToggle" class="head-button toc-handle" type="button" aria-label="목차 열기" aria-controls="tocPanel" aria-expanded="false"><svg class="toc-handle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h.1m3 0h5M8 12h.1m3 0h5M8 16h.1m3 0h5"/></svg><span>목차</span><span class="toc-handle-chevron" aria-hidden="true">›</span></button>
+      <aside id="tocPanel" inert class="toc-panel" aria-label="전자책 목차" aria-hidden="true">
+        <div class="toc-heading"><strong>목차</strong><button id="tocClose" class="toc-close" aria-label="목차 닫기">×</button></div>
+        <nav id="tocNav" aria-label="목차 바로가기"></nav>
+        <div class="toc-note">쪽수는 플립북의 실제 페이지 기준입니다. 이미지로만 된 목차는 자동으로 읽지 못할 수 있습니다.</div>
+      </aside>
+      <div id="tocBackdrop" class="toc-backdrop" hidden></div>
+      <section class="reader" id="reader" aria-label="웹 전자책 뷰어" hidden>
+        <div id="readerStage" class="reader-stage" tabindex="0" aria-label="책 페이지. 마우스 휠이나 좌우 화살표 키로 넘길 수 있습니다.">
+          <div id="stPageRoot" class="pageflip-root" hidden></div>
+          <div id="fallbackBook" class="book-3d" aria-label="책 지면">
+            <div class="base-page left" id="baseLeft"><img id="imgLeft" alt="왼쪽 페이지"></div>
+            <div class="base-page right" id="baseRight"><img id="imgRight" alt="오른쪽 페이지"></div>
+            <div id="turnSheet" class="turn-sheet" aria-hidden="true"><div class="sheet-face sheet-front"><img id="sheetFront" alt=""></div><div class="sheet-face sheet-back"><img id="sheetBack" alt=""></div></div>
+            <div class="spine" aria-hidden="true"></div>
+            <div id="curlCastShadow" class="curl-cast-shadow" aria-hidden="true"></div>
+            <div id="curlSheet" class="curl-sheet" aria-hidden="true"></div>
+          </div>
+          <button class="stage-arrow stage-prev" id="stagePrev" aria-label="이전 페이지"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+          <button class="stage-arrow stage-next" id="stageNext" aria-label="다음 페이지"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        </div>
+        <div class="stage-hint" id="stageHint">페이지 모서리를 클릭하거나 드래그하여 넘기세요.</div>
+        <div class="reader-toolbar" role="group" aria-label="페이지 탐색">
+          <div class="page-navigation" role="group" aria-label="쪽 이동">
+          <button type="button" class="tool-button nav-button" id="firstButton" aria-label="첫 페이지" title="첫 페이지"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6v12m11-12-6 6 6 6"/></svg><span>처음</span></button>
+          <button class="tool-button nav-button" id="prevButton" aria-label="이전 페이지"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>이전</span></button>
+          <div class="pager">
+            <label for="pageNumber">쪽</label>
+            <input id="pageNumber" type="number" min="1" max="1714" step="1" inputmode="numeric" value="1" aria-label="이동할 전자책 페이지 번호">
+            <span class="page-total">/ 1,714</span>
+            <button id="jumpButton" class="mini-button">이동</button>
+          </div>
+          <button class="tool-button nav-button" id="nextButton" aria-label="다음 페이지"><span>다음</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+          <button type="button" class="tool-button nav-button" id="lastButton" aria-label="마지막 페이지" title="마지막 페이지"><span>마지막</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 6v12M8 6l6 6-6 6"/></svg></button>
+          </div>
+          <span class="toolbar-divider" aria-hidden="true"></span>
+          <div class="view-controls" role="group" aria-label="페이지 보기 방식">
+            <button type="button" class="mini-button" id="singleView" aria-pressed="false">한쪽 보기</button>
+            <button type="button" class="mini-button" id="spreadView" aria-pressed="false">두쪽 보기</button>
+          </div>
+          <button type="button" class="mini-button text-tool" id="textTool" aria-pressed="false" title="텍스트 드래그 선택">텍스트 선택</button><button type="button" class="mini-button magnifier-button" id="magnifier" aria-pressed="false" aria-label="돋보기로 클릭 확대" title="돋보기로 클릭 확대"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5m-2.5-2.5v5"/></svg></button>
+          <button type="button" class="mini-button magnifier-button" id="magnifierOut" aria-pressed="false" aria-label="돋보기로 클릭 축소" title="돋보기로 클릭 축소"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5"/></svg></button>
+          <button type="button" class="mini-button magnifier-button" id="handTool" aria-pressed="false" aria-label="손 도구로 확대 지면 이동" title="손 도구"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M8 12V6a1.5 1.5 0 0 1 3 0v5-7a1.5 1.5 0 0 1 3 0v7-5a1.5 1.5 0 0 1 3 0v6-3a1.5 1.5 0 0 1 3 0v6a6 6 0 0 1-6 6h-1c-2 0-3-1-4-2l-5-6a1.5 1.5 0 0 1 2-2l2 1Z"/></svg></button>
+          <div class="zoom-controls" role="group" aria-label="보기 확대 축소"><button id="zoomOutButton" class="zoom-step" title="축소" aria-label="축소"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><button id="zoomResetButton" class="zoom-level" title="100%로 보기">100%</button><button id="zoomInButton" class="zoom-step" title="확대" aria-label="확대"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h12m-6-6v12"/></svg></button></div>
+          <button class="tool-button extra-button" id="fullPageButton" title="현재 페이지 고화질로 보기" aria-label="현재 페이지 원본 이미지 보기">원본 보기</button>
+          <button class="tool-button extra-button" id="fullscreenButton" title="전체 화면" aria-label="전체 화면">전체 화면</button>
+          <button class="tool-button extra-button" id="shareButton" title="현재 페이지 링크 복사" aria-label="현재 페이지 링크 복사">링크 복사</button>
+        </div>
+        <div class="range-row"><span>1</span><input type="range" id="pageRange" min="1" max="1714" value="1" step="1" aria-label="페이지 빠른 이동"><span>1714</span></div>
+        <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
+      </section>
+    <aside id="settingsPanel" class="settings-panel" hidden aria-label="뷰어 설정"><div class="panel-heading"><div><span>APPEARANCE</span><h2>뷰어 설정</h2></div><button id="settingsClose" type="button" aria-label="설정 닫기">×</button></div><div class="panel-body"><label for="titleInput">상단 제목</label><input id="titleInput" type="text" maxlength="80" placeholder="플립북 이름"><label for="subtitleInput">보조 제목</label><input id="subtitleInput" type="text" maxlength="100" placeholder="WEB FLIPBOOK"><label for="headerColor">상단 바 색상</label><div class="color-row"><input id="headerColor" type="color" value="#172648"><output id="colorValue">#172648</output></div><label>제목 앞 아이콘 <small>투명 PNG · 최대 2 MB</small></label><div class="logo-row"><button id="chooseLogo" type="button">PNG 선택</button><button id="clearLogo" type="button">아이콘 제거</button><input id="logoInput" type="file" accept="image/png,.png" hidden></div><label class="check-row"><input id="allowTextSelection" type="checkbox"><span><strong>본문 텍스트 선택 허용</strong><small>켜면 드래그하여 텍스트를 복사할 수 있습니다.</small></span></label><label class="check-row"><input id="cropMarks" type="checkbox"><span><strong>재단선 기준 자동 크롭</strong><small>새로 넣는 PDF·EPUB에 적용합니다. 사방의 재단선이 확인될 때만 자릅니다.</small></span></label><div id="settingsError" class="settings-error" role="alert"></div></div><div class="panel-footer"><button id="settingsCancel" type="button">취소</button><button id="settingsSave" type="button">설정 저장</button></div></aside></main>
+    <footer>플립북 스튜디오 · 파일을 열면 이 컴퓨터에서 처리합니다.</footer>
+  </div>
+  <!-- 로컬 StPageFlip 및 내장 말림 엔진 -->
+  <script src="js/page-flip.browser.js" defer></script>
+  <script src="js/viewer.js" defer></script><script src="js/studio.js" defer></script>
+</body>
+</html>
