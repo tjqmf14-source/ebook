@@ -21,13 +21,19 @@ async function connect(){
     const message=JSON.parse(event.data);
     if(!message.id)return;
     const p=pending.get(message.id);if(!p)return;
-    pending.delete(message.id);message.error?p.reject(Error(message.error.message)):p.resolve(message.result);
+    pending.delete(message.id);clearTimeout(p.timer);message.error?p.reject(Error(message.error.message)):p.resolve(message.result);
   };
   await send('Page.enable');await send('Runtime.enable');
 }
 function send(method,params={}){
   const id=seq++;
-  return new Promise((resolve,reject)=>{pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}));setTimeout(()=>{if(pending.has(id)){pending.delete(id);reject(Error(`${method} timed out`));}},45000);});
+  return new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>{if(pending.has(id)){pending.delete(id);reject(Error(`${method} timed out`));}},45000);
+    timer.unref();
+    pending.set(id,{resolve,reject,timer});
+    try{socket.send(JSON.stringify({id,method,params}));}
+    catch(error){clearTimeout(timer);pending.delete(id);reject(error);}
+  });
 }
 async function job(item){
   if(!socket)await connect();
