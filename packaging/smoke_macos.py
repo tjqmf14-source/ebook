@@ -9,6 +9,7 @@ import tempfile
 import time
 import urllib.request
 import zipfile
+import signal
 
 import pymupdf as fitz
 from PIL import Image
@@ -16,7 +17,7 @@ from PIL import Image
 def run(executable):
     with tempfile.TemporaryDirectory(prefix='flipbook-smoke-') as temp:
         data = Path(temp) / 'data'
-        env = dict(os.environ, FLIPBOOK_DATA_DIR=str(data), PATH='/usr/bin:/bin:/usr/sbin:/sbin')
+        env = dict(os.environ, FLIPBOOK_DATA_DIR=str(data), FLIPBOOK_DEBUG='1', PATH='/usr/bin:/bin:/usr/sbin:/sbin')
         process = subprocess.Popen([executable, '--no-open'], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         try:
             for _ in range(120):
@@ -63,6 +64,15 @@ def run(executable):
         finally:
             process.terminate()
             try: process.wait(timeout=20)
-            except subprocess.TimeoutExpired: process.kill(); process.wait()
+            except subprocess.TimeoutExpired:
+                process.send_signal(signal.SIGUSR1)
+                time.sleep(1)
+                print('Shutdown timeout process tree:')
+                listing=subprocess.check_output(['ps','-ax','-o','pid,ppid,command'],text=True)
+                print('\n'.join(line for line in listing.splitlines() if str(data) in line or 'Flipbook Studio.app' in line))
+                process.kill(); process.wait()
+                print(process.stdout.read().decode(errors='replace'))
+                raise AssertionError('Packaged process did not stop gracefully')
+            print(process.stdout.read().decode(errors='replace'))
 
 if __name__ == '__main__': run(sys.argv[1])

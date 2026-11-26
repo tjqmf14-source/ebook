@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import sys
 import traceback
+import signal
+import faulthandler
 
 data = Path(os.environ.get('FLIPBOOK_DATA_DIR', Path.home() / 'Library/Application Support/Flipbook Studio'))
 data.mkdir(parents=True, exist_ok=True)
@@ -11,6 +13,8 @@ if sys.stdout is None:
     sys.stdout = (data / 'application.log').open('a', encoding='utf-8', buffering=1)
 if sys.stderr is None:
     sys.stderr = sys.stdout
+if os.environ.get('FLIPBOOK_DEBUG') == '1':
+    faulthandler.register(signal.SIGUSR1, file=sys.stderr, all_threads=True)
 
 try:
     import server
