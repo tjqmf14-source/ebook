@@ -12,7 +12,8 @@ from cropmarks import detect_crop_marks
 from toc import infer_front_toc, infer_split_column_toc
 
 ROOT = Path(__file__).resolve().parent
-DATA = ROOT / '.data'
+DATA = Path(os.environ['FLIPBOOK_DATA_DIR']).expanduser() if os.environ.get('FLIPBOOK_DATA_DIR') else (
+    Path.home() / 'Library/Application Support/Flipbook Studio' if sys.platform == 'darwin' else ROOT / '.data')
 WEB = ROOT / 'web'
 TOKEN = secrets.token_urlsafe(32)
 DOCS = {}
@@ -28,8 +29,14 @@ fitz.TOOLS.mupdf_display_warnings(False)
 
 
 def browser_path():
-    for p in [Path(os.environ.get('PROGRAMFILES(X86)', '')) / 'Microsoft/Edge/Application/msedge.exe',
-              Path(os.environ.get('PROGRAMFILES', '')) / 'Google/Chrome/Application/chrome.exe']:
+    if sys.platform == 'darwin':
+        candidates = [base / app / 'Contents/MacOS' / binary
+                      for base in [Path('/Applications'), Path.home() / 'Applications']
+                      for app, binary in [('Google Chrome.app','Google Chrome'), ('Microsoft Edge.app','Microsoft Edge')]]
+    else:
+        candidates = [Path(os.environ.get('PROGRAMFILES(X86)', '')) / 'Microsoft/Edge/Application/msedge.exe',
+                      Path(os.environ.get('PROGRAMFILES', '')) / 'Google/Chrome/Application/chrome.exe']
+    for p in candidates:
         if p.is_file(): return str(p)
     raise RuntimeError('Microsoft Edge 또는 Google Chrome을 찾을 수 없습니다.')
 
@@ -157,7 +164,8 @@ def render(doc, number):
         if out.is_file() and txt.is_file(): return out, txt
         if doc['kind'] == 'fixed':
             if RENDERER is None or RENDERER.poll() is not None:
-                node = shutil.which('node')
+                bundled_node = ROOT / 'runtime/node'
+                node = str(bundled_node) if bundled_node.is_file() else shutil.which('node')
                 if not node: raise RuntimeError('고정 지면 EPUB에는 Node.js가 필요합니다.')
                 RENDERER = subprocess.Popen([node, str(ROOT / 'tools/render-epub.mjs'), browser_path(), str(DATA / 'renderer'), BASE],
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=(DATA / 'renderer.log').open('a', encoding='utf-8'),
@@ -405,13 +413,18 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     global BASE
-    parser=argparse.ArgumentParser();parser.add_argument('--open',action='store_true');parser.add_argument('--port',type=int,default=0)
-    args=parser.parse_args(); DATA.mkdir(exist_ok=True)
+    parser=argparse.ArgumentParser();parser.add_argument('--open',action='store_true');parser.add_argument('--no-open',action='store_true');parser.add_argument('--port',type=int,default=0)
+    args=parser.parse_args(); DATA.mkdir(parents=True,exist_ok=True)
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
     BASE=f'http://127.0.0.1:{server.server_port}'
     (DATA/'server.json').write_text(json.dumps({'url':BASE,'pid':os.getpid()}),'utf-8')
-    if args.open:
-        subprocess.Popen([browser_path(),f'--app={BASE}',f'--user-data-dir={DATA / "window-profile"}', '--no-first-run','--window-size=1440,1000'])
+    if args.open and not args.no_open:
+        window = subprocess.Popen([browser_path(),f'--app={BASE}',f'--user-data-dir={DATA / "window-profile"}', '--no-first-run','--window-size=1440,1000'])
+        if getattr(sys,'frozen',False) and sys.platform == 'darwin':
+            def close_with_window():
+                window.wait()
+                server.shutdown()
+            threading.Thread(target=close_with_window,daemon=True).start()
     print(BASE,flush=True)
     try: server.serve_forever()
     finally:

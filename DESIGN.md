@@ -70,3 +70,9 @@ StPageFlip-LICENSE.txt
 ## 복구
 
 소스 변경은 Git 이력으로 추적한다. 실행 중인 프로그램은 메모리에 로드한 서버 코드를 사용하므로 업데이트 후 다시 실행한다. 기존 배포 ZIP은 자동 변경되지 않으며 새 버전이 필요하면 다시 생성한다.
+
+## macOS 패키징
+
+`packaging/build_macos.py`는 macOS에서 PyInstaller로 Python·필수 라이브러리·Node 실행파일·뷰어 리소스를 묶어 `.app`과 DMG를 만든다. Windows에서 macOS 바이너리를 교차 빌드하지 않는다. GitHub Actions에서 Apple Silicon/Intel 아키텍처를 각각 빌드하며 DMG 검증, 번들 코드서명 검증, 읽기 전용 DMG에서 PDF·고정 지면 EPUB의 WebP ZIP 생성을 실행한다.
+
+Mac 앱은 `/Applications` 또는 사용자 `Applications`의 Chrome/Edge를 사용한다. 앱 폴더에 데이터를 쓰지 않고 사용자 `Library/Application Support/Flipbook Studio`에 저장한다. 앱 전용 브라우저 프로세스가 종료되면 패키지 서버를 종료한다. 빌드의 코드는 ad-hoc 서명이며 Apple Developer ID 인증서·Apple 공증은 포함하지 않는다. 회사 관리 정책에서 실행을 허용하는지 별도 확인이 필요하다.

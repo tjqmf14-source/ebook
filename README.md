@@ -2,6 +2,8 @@
 
 현재 프로그램 구조와 검증 범위는 [설계 문서](DESIGN.md)를 참고하세요.
 
+Mac용 설치 패키지는 GitHub Actions의 `Build macOS DMG` 작업으로 만듭니다. Apple Silicon과 Intel용 DMG를 각각 생성하며 Python·EPUB 처리용 Node를 포함합니다. Chrome 또는 Edge는 별도 설치가 필요합니다. 설치와 보안 관련 제한은 [Mac 설치 안내](packaging/INSTALL-MAC.txt)를 확인하세요. 이 빌드는 Apple Developer ID 서명·공증이 없는 테스트 설치본입니다.
+
 Windows에서 [실행.cmd](실행.cmd)을 두 번 클릭하면 Edge 또는 Chrome의 독립 창이 열립니다. 시작 화면에 PDF 또는 EPUB을 드래그하거나 **파일 선택**을 누르세요. 파일은 이 컴퓨터의 `.data/books`에 복사되어 처리되고, 원본은 수정되지 않습니다.
 
 **뷰어 설정**에서 상단 제목, 보조 제목, 바 색상, 투명 PNG 아이콘(2MB 이하), 본문 텍스트 선택 허용 여부를 바꿀 수 있습니다. 설정은 `.data/settings.json`에 저장됩니다. 텍스트 선택을 켠 뒤 책을 열면 하단의 **텍스트 선택** 버튼으로 지면의 글자를 드래그해 복사할 수 있습니다. 스캔 PDF처럼 실제 글자 정보가 없는 문서는 선택할 텍스트가 없습니다.
