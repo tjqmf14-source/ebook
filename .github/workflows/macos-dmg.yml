@@ -40,7 +40,14 @@ jobs:
           mount_path="$RUNNER_TEMP/flipbook-dmg"
           mkdir -p "$mount_path"
           hdiutil attach "dist/FlipbookStudio-macOS-${{ matrix.arch }}.dmg" -nobrowse -readonly -mountpoint "$mount_path"
-          trap 'hdiutil detach "$mount_path"' EXIT
+          cleanup() {
+            for attempt in 1 2 3 4 5; do
+              if hdiutil detach "$mount_path"; then return 0; fi
+              sleep 2
+            done
+            return 1
+          }
+          trap cleanup EXIT
           python packaging/smoke_macos.py "$mount_path/Flipbook Studio.app/Contents/MacOS/Flipbook Studio"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

@@ -1,7 +1,7 @@
 """Local-only flipbook studio. Original documents are never modified."""
 from __future__ import annotations
 import argparse, base64, hashlib, io, json, os, posixpath, re, secrets, shutil, subprocess
-import sys, threading, time, urllib.parse, uuid, zipfile
+import sys, threading, time, urllib.parse, uuid, zipfile, signal
 import html
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -416,6 +416,8 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--open',action='store_true');parser.add_argument('--no-open',action='store_true');parser.add_argument('--port',type=int,default=0)
     args=parser.parse_args(); DATA.mkdir(parents=True,exist_ok=True)
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
+    if sys.platform == 'darwin':
+        signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=server.shutdown,daemon=True).start())
     BASE=f'http://127.0.0.1:{server.server_port}'
     (DATA/'server.json').write_text(json.dumps({'url':BASE,'pid':os.getpid()}),'utf-8')
     if args.open and not args.no_open:
